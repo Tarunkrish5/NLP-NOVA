@@ -1,57 +1,71 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useStore } from '../store';
 
 export const useTelemetry = () => {
-    const [telemetry, setTelemetry] = useState({
+    const [vitals, setVitals] = useState({
         hr: 72,
         o2: 98,
         bp: "120/80",
         temp: 36.6,
         status: "Stable"
     });
-    const [isConnected, setIsConnected] = useState(false);
-    const [logs, setLogs] = useState<any[]>([]);
+    const setConnected = useStore((state) => state.setConnected);
+
+    const updateVitals = useCallback((data: any) => {
+        setVitals(data);
+    }, []);
 
     useEffect(() => {
-        let ws: WebSocket;
-        let retryInterval: any;
+        let socket: WebSocket | null = null;
+        let pollInterval: number;
 
         const connect = () => {
-            ws = new WebSocket('ws://localhost:8000/ws');
+            socket = new WebSocket('ws://localhost:8000/ws');
 
-            ws.onopen = () => {
-                setIsConnected(true);
-                if (retryInterval) clearInterval(retryInterval);
+            socket.onopen = () => {
+                setConnected(true);
+                console.log("📡 HUD Synchronized with Medical Core");
             };
 
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'TELEMETRY') {
-                    setTelemetry(data.data);
-                } else if (data.type === 'ACTION') {
-                    setLogs(prev => [data.log, ...prev].slice(0, 20));
+            socket.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                if (msg.type === "TELEMETRY") {
+                    updateVitals(msg.data);
                 }
             };
 
-            ws.onclose = () => {
-                setIsConnected(false);
-                // Attempt to reconnect every 2 seconds
-                if (!retryInterval) {
-                    retryInterval = setInterval(connect, 2000);
-                }
+            socket.onclose = () => {
+                setConnected(false);
+                setTimeout(connect, 3000);
             };
 
-            ws.onerror = () => {
-                ws.close();
+            socket.onerror = (err) => {
+                console.error("Telemetry Link Failure:", err);
+                socket?.close();
             };
+        };
+
+        const startPolling = () => {
+            pollInterval = window.setInterval(async () => {
+                try {
+                    const res = await fetch('http://localhost:8000/telemetry');
+                    const data = await res.json();
+                    updateVitals(data);
+                    setConnected(true);
+                } catch {
+                    setConnected(false);
+                }
+            }, 2000);
         };
 
         connect();
+        startPolling();
 
         return () => {
-            if (ws) ws.close();
-            if (retryInterval) clearInterval(retryInterval);
+            socket?.close();
+            clearInterval(pollInterval);
         };
-    }, []);
+    }, [updateVitals, setConnected]);
 
-    return { ...telemetry, isConnected, logs };
+    return vitals;
 };
