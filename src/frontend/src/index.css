@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-background: #05070A;
+  --color-nova-blue: #00d2ff;
+  --color-nova-cyan: #00f2ff;
+  --color-nova-red: #ff3e3e;
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+
+  --font-orbitron: "Orbitron", sans-serif;
+  --font-inter: "Inter", sans-serif;
+
+  --breakpoint-xs: 480px;
+}
+
+:root {
+  background-color: var(--color-background);
+  color: white;
+  font-family: var(--font-inter);
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+.glass-panel {
+  background-color: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-glass-border);
+}
+
+.nova-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nova-button:hover {
+  transform: scale(1.05);
+}
+
+.nova-button:active {
+  transform: scale(0.95);
+}
+
+/* Custom scrollbar for medical feel */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 210, 255, 0.3);
+  border-radius: 2px;
+}
+
+/* Animation Utilities */
+.animate-glow {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 5px var(--color-nova-blue), 0 0 10px var(--color-nova-blue);
+  }
+
+  to {
+    text-shadow: 0 0 10px var(--color-nova-cyan), 0 0 20px var(--color-nova-cyan);
+  }
+}
